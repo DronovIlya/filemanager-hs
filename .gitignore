@@ -1,0 +1,8 @@
+dist/
+.DS_STORE
+.cabal-sandbox/
+cabal.sandbox.config
+*~
+*.hp
+*.prof
+*.old
