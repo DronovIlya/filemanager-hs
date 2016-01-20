@@ -1,25 +1,27 @@
 module GUI.MyView where
 
-import Control.Applicative
-  (
-    (<$>)
-  )
+import Control.Concurrent.STM (TVar, newTVarIO, readTVarIO, writeTVar, atomically)
+import Control.Monad
 import Graphics.UI.Gtk
 import GUI.Data
-
-names :: IO [(String, String)]
-names = return [("123", "123"), ("234", "456")]
+-- fix "cycle" probrem at compile time
+import {-# SOURCE #-} GUI.Events (setEventsCallbacks)
+import IO.Utils (getHomeFolder, obtainDirectory)
+import System.Directory (setCurrentDirectory)
 
 createMyView :: MyGui -> IO (TreeView) -> IO (MyView)
 createMyView gui iotv = do
   treeView <- iotv
 
-  list <- listStoreNew =<< names
-
-  containerAdd (scrollWindow1 gui) treeView
+  list <- newTVarIO =<< listStoreNew []
   
-  let myView = MyView treeView list
-  return (MyView treeView list)
+  treeView' <- newTVarIO treeView
+  let myView = MyView treeView' list
+
+  setEventsCallbacks gui myView 
+  containerAdd (scrollWindow1 gui) treeView
+
+  return myView
 
 createTreeView :: IO (TreeView)
 createTreeView = do
@@ -63,18 +65,33 @@ createTreeView = do
 
   return treeView
 
-getRawModel :: MyView -> IO (ListStore (String, String))
-getRawModel myview = return (models myview)
+createFileInfo :: [FilePath] -> IO [FileInfo]
+createFileInfo paths = forM paths $ \p -> do
+  return (FileInfo p)
+
+writeTVarIO :: TVar a -> a -> IO ()
+writeTVarIO tvar val = atomically $ writeTVar tvar val  
+
+refreshView :: MyGui -> MyView -> IO ()
+refreshView mygui myview = do
+  homeFolder <- getHomeFolder
+  setCurrentDirectory homeFolder
+  files <- createFileInfo =<< obtainDirectory homeFolder
+  filesList <- listStoreNew files
+
+  writeTVarIO (rawModel myview) filesList
+  constructView mygui myview
+  return ()
 
 constructView :: MyGui -> MyView -> IO ()
 constructView gui myview = do
-  rawModel <- getRawModel myview
-  --sortedModel <- treeModelSortNewWithModel rawModel []
+  view' <- readTVarIO $ view myview
+  rawModel' <- readTVarIO $ rawModel myview
 
-  treeModelSetColumn rawModel (makeColumnIdString 0) fst 
-  treeModelSetColumn rawModel (makeColumnIdString 1) fst 
-  treeModelSetColumn rawModel (makeColumnIdString 2) fst 
+  treeModelSetColumn rawModel' (makeColumnIdString 0) name 
+  treeModelSetColumn rawModel' (makeColumnIdString 1) name 
+  treeModelSetColumn rawModel' (makeColumnIdString 2) name
   
-  treeViewSetModel (view myview) rawModel
-  treeViewSetRubberBanding (view myview) True
+  treeViewSetModel view' rawModel'
+  treeViewSetRubberBanding view' True
   return ()

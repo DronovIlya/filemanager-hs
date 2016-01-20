@@ -12,9 +12,8 @@ main = do
   myGui <- createGUI
   myView <- createMyView myGui createTreeView  
 
-  constructView myGui myView
+  refreshView myGui myView
 
-  set (rootWindow myGui) [ windowDefaultWidth := 500, windowDefaultHeight := 500 ]
   widgetShowAll (rootWindow myGui)
   
   mainGUI

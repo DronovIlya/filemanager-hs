@@ -1,5 +1,6 @@
 module GUI.Data where
 
+import Control.Concurrent.STM (TVar)
 import Graphics.UI.Gtk
 
 data FileInfo = FileInfo {
@@ -7,13 +8,13 @@ data FileInfo = FileInfo {
 }
 
 data MyView = MyView {
-  view   :: TreeView,
-  models :: ListStore (String, String) 
+  view   :: TVar TreeView,
+  rawModel :: TVar (ListStore FileInfo)
 }
 
 data MyGui = MyGui {
   rootWindow :: Window,
-  scrollWindow1 :: ScrolledWindow,
-  scrollWindow2 :: ScrolledWindow
+  scrollWindow1 :: ScrolledWindow
+  --scrollWindow2 :: ScrolledWindow
 }
 
