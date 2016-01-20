@@ -84,8 +84,8 @@ constructView gui myview = do
   rawModel' <- readTVarIO $ rawModel myview
 
   treeModelSetColumn rawModel' (makeColumnIdString 0) name 
-  treeModelSetColumn rawModel' (makeColumnIdString 1) name 
-  treeModelSetColumn rawModel' (makeColumnIdString 2) name
+  treeModelSetColumn rawModel' (makeColumnIdString 1) size 
+  treeModelSetColumn rawModel' (makeColumnIdString 2) permissions
   
   treeViewSetModel view' rawModel'
   treeViewSetRubberBanding view' True
