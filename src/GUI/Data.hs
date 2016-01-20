@@ -2,10 +2,7 @@ module GUI.Data where
 
 import Control.Concurrent.STM (TVar)
 import Graphics.UI.Gtk
-
-data FileInfo = FileInfo {
-  name :: String
-}
+import Files.Manager
 
 data MyView = MyView {
   view   :: TVar TreeView,

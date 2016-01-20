@@ -7,6 +7,7 @@ import Data.Maybe(catMaybes, fromJust)
 import Graphics.UI.Gtk
 import GUI.Data
 import GUI.MyView
+import Files.Manager
 
 setEventsCallbacks :: MyGui -> MyView -> IO ()
 setEventsCallbacks gui myview = do

@@ -1,13 +1,6 @@
 module IO.Utils where
 
-import System.Posix.Files
-import System.Posix.User
-import System.Directory
+import Control.Concurrent.STM (TVar, newTVarIO, readTVarIO, writeTVar, atomically)
 
-obtainDirectory :: FilePath -> IO [FilePath]
-obtainDirectory path = do
-    contents <- getDirectoryContents path
-    return contents
-
-getHomeFolder :: IO FilePath
-getHomeFolder = getLoginName >>= (\name -> return ("/Users/" ++ name))
+writeTVarIO :: TVar a -> a -> IO ()
+writeTVarIO tvar val = atomically $ writeTVar tvar val  

@@ -4,9 +4,11 @@ import Control.Concurrent.STM (TVar, newTVarIO, readTVarIO, writeTVar, atomicall
 import Control.Monad
 import Graphics.UI.Gtk
 import GUI.Data
+import GUI.Utils
+import IO.Utils
 -- fix "cycle" probrem at compile time
 import {-# SOURCE #-} GUI.Events (setEventsCallbacks)
-import IO.Utils (getHomeFolder, obtainDirectory)
+import Files.Manager
 import System.Directory (setCurrentDirectory)
 
 createMyView :: MyGui -> IO (TreeView) -> IO (MyView)
@@ -64,13 +66,6 @@ createTreeView = do
   cellLayoutAddColumnAttribute cP renderTxt ct $ makeColumnIdString 2
 
   return treeView
-
-createFileInfo :: [FilePath] -> IO [FileInfo]
-createFileInfo paths = forM paths $ \p -> do
-  return (FileInfo p)
-
-writeTVarIO :: TVar a -> a -> IO ()
-writeTVarIO tvar val = atomically $ writeTVar tvar val  
 
 refreshView :: MyGui -> MyView -> IO ()
 refreshView mygui myview = do
