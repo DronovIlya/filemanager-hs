@@ -12,7 +12,7 @@ main = do
   myGui <- createGUI
   myView <- createMyView myGui createTreeView  
 
-  refreshView myGui myView
+  refreshView myGui myView Nothing
 
   widgetShowAll (rootWindow myGui)
   

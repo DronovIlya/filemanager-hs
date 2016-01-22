@@ -67,11 +67,16 @@ createTreeView = do
 
   return treeView
 
-refreshView :: MyGui -> MyView -> IO ()
-refreshView mygui myview = do
-  homeFolder <- getHomeFolder
-  setCurrentDirectory homeFolder
-  files <- createFileInfo =<< obtainDirectory homeFolder
+refreshView :: MyGui -> MyView -> Maybe FilePath -> IO ()
+refreshView mygui myview mfp = do
+  case mfp of
+    Just fp -> refreshView' mygui myview fp
+    Nothing -> refreshView' mygui myview =<< getHomeFolder
+
+refreshView' :: MyGui -> MyView -> FilePath -> IO ()
+refreshView' mygui myview fp = do
+  setCurrentDirectory fp
+  files <- createFileInfo =<< obtainDirectory fp
   filesList <- listStoreNew files
 
   writeTVarIO (rawModel myview) filesList
