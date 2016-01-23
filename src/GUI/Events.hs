@@ -23,15 +23,20 @@ setEventsCallbacks :: MyGui ->
 setEventsCallbacks gui myview = do
   print "setup callbacks"
   left <- readTVarIO $ (view (leftWindow myview))
+  right <- readTVarIO $ (view (rightWindow myview))
   _ <- left `on` rowActivated
-    $ (\_ _ -> handleEvent gui (leftWindow myview) open)
+    $ (\_ _ -> handleEvent gui (leftWindow myview) (rightWindow myview) open)
 
-  handleGuiEvents gui (leftWindow myview)
+  _ <- right `on` rowActivated
+    $ (\_ _ -> handleEvent gui (rightWindow myview) (leftWindow myview) open)
+
+  handleGuiEvents gui (leftWindow myview) (rightWindow myview)
+  handleGuiEvents gui (rightWindow myview) (leftWindow myview)
   return ()
 
-handleGuiEvents :: MyGui -> MyWindow -> IO ()
-handleGuiEvents gui window = do
-  view <- readTVarIO $ (view window)
+handleGuiEvents :: MyGui -> MyWindow -> MyWindow -> IO ()
+handleGuiEvents gui fromWindow toWindow = do
+  view <- readTVarIO $ (view fromWindow)
   -- handle mouse right-click
   _ <- view `on` buttonPressEvent $ do
     eb <- eventButton
@@ -42,30 +47,53 @@ handleGuiEvents gui window = do
     return False
 
   _ <- actionFileOpen gui `on` menuItemActivated $
-    liftIO $ handleEvent gui window open
+    liftIO $ handleEvent gui fromWindow toWindow open
   _ <- actionFileExecute gui `on` menuItemActivated $
-    liftIO $ handleEvent gui window execute
+    liftIO $ handleEvent gui fromWindow toWindow execute
+  _ <- actionFileCopy gui `on` menuItemActivated $
+    liftIO $ handleEvent gui fromWindow toWindow copy
   return ()
   
 
-handleEvent :: MyGui -> MyWindow -> ([FileInfo] -> MyGui -> MyWindow -> IO()) -> IO()
-handleEvent gui window io = do
-  items <- getSelectedItems gui window
-  io items gui window
+handleEvent :: MyGui -> MyWindow -> MyWindow -> ([FileInfo] -> MyGui -> MyWindow -> MyWindow -> IO()) -> IO()
+handleEvent gui fromWindow toWindow io = do
+  items <- getSelectedItems gui fromWindow
+  io items gui fromWindow toWindow
 
-
-open :: [FileInfo] -> MyGui -> MyWindow -> IO ()
-open [file] gui window = do
-  print "open"
+-- |Opens a file or directory
+open :: [FileInfo] -> MyGui -> MyWindow -> MyWindow -> IO ()
+open [file] gui fromWindow toWindow = do
+  path <- readTVarIO $ path fromWindow
+  path' <- createPath path file
+  refreshWindow gui fromWindow path'
   return ()
 
-execute :: [FileInfo] -> MyGui -> MyWindow -> IO ()
-execute [file] gui window = do
+-- |Copy files from one directory to another
+-- TODO: check cases with incompatible files selection
+copy :: [FileInfo] -> MyGui -> MyWindow -> MyWindow -> IO ()
+copy [file] gui fromWindow toWindow = do
+  fromPath <- readTVarIO $ path fromWindow
+  print fromPath
+  fromPath' <- createPath fromPath file
+  print fromPath'
+
+  toPath <- readTVarIO $ path toWindow
+  print toPath
+  toPath' <- createPath toPath file
+  print toPath'
+
+  copyFile fromPath' toPath'
+  refreshWindow gui toWindow toPath
+copy [] gui fromWindow toWindow = do
+  return ()
+
+execute :: [FileInfo] -> MyGui -> MyWindow -> MyWindow -> IO ()
+execute [file] gui fromWindow toWindow = do
   print "execute"
   return ()
 
-delete :: [FileInfo] -> MyGui -> MyWindow -> IO ()
-delete [file] gui window = do
+delete :: [FileInfo] -> MyGui -> MyWindow -> MyWindow -> IO ()
+delete [file] gui fromWindow toWindow = do
   print "delete"
   return ()
 

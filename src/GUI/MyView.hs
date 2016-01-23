@@ -93,13 +93,15 @@ refreshView' mygui myview fp = do
 
 refreshWindow :: MyGui -> MyWindow -> FilePath -> IO ()
 refreshWindow gui window fp = do
+  print "start refresh window"
   setCurrentDirectory fp
+  print "setdirectroy"
   files <- createFileInfo =<< obtainDirectory fp
   filesList <- listStoreNew files
   
   writeTVarIO (rawModel window) filesList
   writeTVarIO (path window) fp
-
+  print "start constructView"
   constructView gui window
 
 constructView :: MyGui -> MyWindow -> IO ()
