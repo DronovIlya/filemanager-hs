@@ -2,33 +2,33 @@ module GUI.Data where
 
 import Control.Concurrent.STM (TVar)
 import Graphics.UI.Gtk
-import Files.Manager
+import Files.Data
 
-data MyWindow = MyWindow {
-  view :: TVar TreeView,
-  path :: TVar FilePath,
-  rawModel :: TVar (ListStore FileInfo)
+-- |Data type that stores in views
+type DataType = FileEntry FileInfo
+
+-- |Container that holds current view's state
+data MyContainer = MyContainer {
+  left  :: MyView,                           -- ^ left view
+  right :: MyView                            -- ^ right view
 }
 
+-- |Model that contains neccesary data
 data MyView = MyView {
-  leftWindow :: MyWindow,
-  rightWindow :: MyWindow
+  view     :: TVar TreeView,                 -- ^ main view container
+  dir      :: TVar FilePath,                 -- ^ current directory 
+  rawModel :: TVar (ListStore DataType)      -- ^ corresponding data
 }
 
+-- |Base GUI data
 data MyGui = MyGui {
-  rootWindow :: Window,
-  scrollWindow1 :: ScrolledWindow,
-  scrollWindow2 :: ScrolledWindow,
+  rootWindow :: Window,                      -- ^ root window - GtkWindow
+  scrollWindow1 :: ScrolledWindow,           -- ^ left scrolled window
+  scrollWindow2 :: ScrolledWindow,           -- ^ right scrolled window
 
-  -- Menu --
-  actionMenu :: Menu,
-  actionFileOpen :: ImageMenuItem,
-  actionFileExecute :: ImageMenuItem,
-  actionFileNew :: ImageMenuItem,
-  actionFileCut :: ImageMenuItem,
-  actionFileCopy :: ImageMenuItem,
-  actionFileRename :: ImageMenuItem,
-  actionFilePaste :: ImageMenuItem,
-  actionFileDelete :: ImageMenuItem
+  actionMenu :: Menu,                        -- ^ action menu appears on right click
+  actionFileOpen :: ImageMenuItem,           -- ^ open file
+  actionFileCopy :: ImageMenuItem,           -- ^ copy file
+  actionFileDelete :: ImageMenuItem          -- ^ delete file
 }
 

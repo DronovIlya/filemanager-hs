@@ -3,6 +3,13 @@ module Files.Utils where
 import qualified Control.Exception as E
 import qualified System.IO as I
 
+import System.FilePath
+  (
+    splitDirectories,
+    joinPath,
+    (</>)
+  )
+
 import System.Posix.Files
 import System.Directory
 import Control.Monad
@@ -25,3 +32,15 @@ makePermissions path = getPermissions path >>=
                     ++ ( if ( writable p ) then "w" else "-" )
                     ++ ( if ( executable p ) then "x" else  "-" )
                     ++ ( if ( searchable p ) then "s" else "-" ) ) )
+
+
+       -----------
+       -- PATHS --
+       -----------
+curDirPath :: FilePath ->
+              FilePath
+curDirPath = last . splitDirectories
+
+upDirPath :: FilePath ->
+             FilePath
+upDirPath = joinPath . init . splitDirectories

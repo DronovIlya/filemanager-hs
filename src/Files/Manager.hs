@@ -1,39 +1,130 @@
 module Files.Manager where
 
-import System.Posix.Files
 import System.Posix.User
-import System.Directory
 import Control.Monad
-import Files.Utils (makeSize, makePermissions)
+
+import System.FilePath
+  (
+    (</>)
+  )
+import Files.Utils 
+  (
+	  makeSize, 
+	  makePermissions,
+	  curDirPath,
+	  upDirPath
+  )
+
 import Files.Operations
+import Files.Data
 
-data FileInfo = FileInfo {
-  name :: String,
-  size :: String,
-  permissions :: String
-}
+import Control.Exception
+  (
+    handle
+  )
 
-createFileInfo :: [FilePath] -> IO [FileInfo]
-createFileInfo paths = forM paths $ \path -> do
-  size <- makeSize path
-  permissions <- makePermissions path
-  return (FileInfo path size permissions)
+import Control.Exception.Base
+  (
+    IOException
+  )
 
-obtainDirectory :: FilePath -> IO [FilePath]
-obtainDirectory path = do
-    contents <- getDirectoryContents path
-    return contents
+import qualified System.Posix.Files as SPF
+import qualified System.Posix.Directory as SPD
+
+      
+      ---------------------------------------------------
+      -- Manager\s API for reading Files and Directories --
+      ----------------------------------------------------
+
+
+readFile :: (FilePath) ->
+            IO (FileEntry FileInfo)
+readFile fp = do
+  fi <- parseFileInfo fp
+  readFile' fi fp
+
+readFile' :: FileInfo ->
+             FilePath ->
+             IO (FileEntry FileInfo)
+readFile' fi fp = do
+  let curFile = curDirPath fp
+      folder = upDirPath fp
+  handleError folder curFile $ do
+    st <- SPF.getSymbolicLinkStatus fp
+    file <- readFile'' st fi curFile
+    return $ FileEntry folder file
+
+readFile'' :: SPF.FileStatus ->
+              FileInfo ->
+              FilePath ->
+              IO (File FileInfo)
+readFile'' st fi fp
+  | SPF.isDirectory st   = return $ Directory   fp fi
+  | SPF.isRegularFile st = return $ RegularFile fp fi
+  | otherwise            = return $ UnkhownFile fp (userError "UnkhownFile")
+
+readDirectory :: FilePath ->
+                 IO [FileEntry FileInfo]
+readDirectory fp = do
+  fi <- parseFileInfo fp
+  filePaths <- getDirectoryFiles fp
+  readDirectory' filePaths fi fp
+
+readDirectory' :: [FilePath] ->
+                  FileInfo ->
+                  FilePath ->
+                  IO [FileEntry FileInfo]
+readDirectory' files fi fp = do
+  content <- mapM (\p -> readFile' fi $ fp </> p) files
+  return content
+
+getDirectoryFiles :: FilePath ->
+                     IO [FilePath]
+getDirectoryFiles fp = do
+  stream <- SPD.openDirStream fp
+  dirs <- getDirectoryFiles' stream []
+  SPD.closeDirStream stream
+  return dirs
+
+getDirectoryFiles' :: SPD.DirStream ->
+                      [FilePath] -> 
+                      IO [FilePath]
+getDirectoryFiles' stream dirs = do
+  dir <- SPD.readDirStream stream
+  if (dir == "")
+    then return dirs
+    else getDirectoryFiles' stream (dir : dirs)	
+
+
+      -------------------------------------
+                    -- Contents helper --
+      ----------------------------------------------------
+
+obtainContents :: FileEntry FileInfo ->
+                  IO [FileEntry FileInfo]
+obtainContents ff = readDirectory $ getFullPath ff
 
 getHomeFolder :: IO FilePath
 getHomeFolder = getLoginName >>= (\name -> return ("/Users/" ++ name))
 
-createPath :: FilePath -> FileInfo -> IO (FilePath)
-createPath dir file = return (dir ++ "/" ++ (name file))
+      -------------------
+      -- HANDLE ERRORS --
+      -------------------
 
-{-
+handleError :: FilePath -> -- ^ path to file
+               FileName -> -- ^ file's name
+               IO (FileEntry a) -> -- ^ parsed file entry
+               IO (FileEntry a)    -- ^ resuling unkhown file
+handleError fp fn = handle (\e -> return $ FileEntry fp $ UnkhownFile fn e)
 
-			OPERATIONS
 
--}
+getFullPath :: FileEntry a ->
+               FilePath
+getFullPath (FileEntry folder file) = folder </> name file
 
-
+-- |Parse all information about file
+parseFileInfo :: FilePath -> IO FileInfo
+parseFileInfo fp = do
+  status <- SPF.getSymbolicLinkStatus fp
+  return $ FileInfo
+    (SPF.modificationTime status)

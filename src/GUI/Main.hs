@@ -11,12 +11,12 @@ main = do
 
   initDirectory
 
-  myGui <- createGUI
-  myView <- createMyView myGui 
+  gui <- createGUI
+  container <- createBaseContainer gui 
 
-  refreshView myGui myView Nothing
+  refreshContainer gui container Nothing
 
-  widgetShowAll (rootWindow myGui)
+  widgetShowAll (rootWindow gui)
   
   mainGUI
   return ()

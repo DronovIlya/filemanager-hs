@@ -16,6 +16,7 @@ library
   exposed-modules:     Files.Manager
                        Files.Utils
                        Files.Operations
+                       Files.Data
   build-depends:       base >= 4.7,
                        directory >= 1.1.0.0 && < 1.2.3.0,
                        process,

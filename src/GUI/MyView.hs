@@ -1,41 +1,59 @@
 module GUI.MyView where
 
-import Control.Concurrent.STM (TVar, newTVarIO, readTVarIO, writeTVar, atomically)
 import Control.Monad
 import Graphics.UI.Gtk
 import GUI.Data
 import GUI.Utils
 import IO.Utils
+  (
+    newVar,
+    readVar,
+    writeVar
+  )
 -- fix "cycle" probrem at compile time
-import {-# SOURCE #-} GUI.Events (setEventsCallbacks)
+import {-# SOURCE #-} GUI.Events 
+  (
+    setEventsCallbacks
+  )
+
 import Files.Manager
+  (
+    readFile,
+    getHomeFolder
+  )
+
+import Files.Data
 import System.Directory
 
 initDirectory :: IO ()
 initDirectory = do
-  home <- getHomeFolder
+  home <- Files.Manager.getHomeFolder
   setCurrentDirectory home
   return ()
 
-createMyView :: MyGui -> IO (MyView)
-createMyView gui = do
-  leftTreeView <- createTreeView
-  rightTreeView <- createTreeView
+createBaseContainer :: MyGui -> 
+                       IO (MyContainer)
+createBaseContainer gui = do
+  leftTree <- createTreeView
+  rightTree <- createTreeView
 
-  window1 <- initTreeView (scrollWindow1 gui) leftTreeView
-  window2 <- initTreeView (scrollWindow2 gui) rightTreeView
+  left <- createMyView (scrollWindow1 gui) leftTree
+  right <- createMyView (scrollWindow2 gui) rightTree
 
-  let myview = MyView window1 window2
-  setEventsCallbacks gui myview
-  return myview
+  let container = MyContainer left right
 
-initTreeView :: ScrolledWindow -> TreeView -> IO (MyWindow)
-initTreeView container tv = do
-  rawModel <- newTVarIO =<< listStoreNew []
-  path <- newTVarIO =<< getCurrentDirectory
-  treeView <- newTVarIO tv
+  setEventsCallbacks gui container
+  return container
+
+createMyView :: ScrolledWindow -> 
+                TreeView -> 
+                IO (MyView)
+createMyView container tv = do
+  rawModel <- newVar =<< listStoreNew []
+  dir <- newVar =<< getCurrentDirectory
+  treeView <- newVar tv
   containerAdd container tv
-  return (MyWindow treeView path rawModel)
+  return (MyView treeView dir rawModel)
   
 createTreeView :: IO (TreeView)
 createTreeView = do
@@ -44,74 +62,70 @@ createTreeView = do
   selection <- treeViewGetSelection treeView
   treeSelectionSetMode selection SelectionMultiple
 
-  renderTxt <- cellRendererTextNew
-  let ct = cellText   :: (CellRendererTextClass cr) => Attr cr String
-
-  -- filename column
-  cF <- treeViewColumnNew
-  treeViewColumnSetTitle        cF "Filename"
-  treeViewColumnSetResizable    cF True
-  treeViewColumnSetClickable    cF True
-  treeViewColumnSetSortColumnId cF 0
-  cellLayoutPackStart cF renderTxt True
-  _ <- treeViewAppendColumn treeView cF
-  cellLayoutAddColumnAttribute cF renderTxt ct $ makeColumnIdString 0
-
-  -- date column
-  cMD <- treeViewColumnNew
-  treeViewColumnSetTitle        cMD "Date"
-  treeViewColumnSetResizable    cMD True
-  treeViewColumnSetClickable    cMD True
-  treeViewColumnSetSortColumnId cMD 1
-  cellLayoutPackStart cMD renderTxt True
-  _ <- treeViewAppendColumn treeView cMD
-  cellLayoutAddColumnAttribute cMD renderTxt ct $ makeColumnIdString 1
-
-  -- permissions column
-  cP <- treeViewColumnNew
-  treeViewColumnSetTitle        cP "Permission"
-  treeViewColumnSetResizable    cP True
-  treeViewColumnSetClickable    cP True
-  treeViewColumnSetSortColumnId cP 2
-  cellLayoutPackStart cP renderTxt True
-  _ <- treeViewAppendColumn treeView cP
-  cellLayoutAddColumnAttribute cP renderTxt ct $ makeColumnIdString 2
-
+  createTreeViewColumn treeView "Filename" 0
+  createTreeViewColumn treeView "Date" 1
+  createTreeViewColumn treeView "Permission" 2
   return treeView
 
-refreshView :: MyGui -> MyView -> Maybe FilePath -> IO ()
-refreshView mygui myview mfp = do
-  case mfp of
-    Just fp -> refreshView' mygui myview fp
-    Nothing -> refreshView' mygui myview =<< getHomeFolder
+createTreeViewColumn :: TreeView ->
+                        String ->
+                        Int ->
+                        IO ()
+createTreeViewColumn view title index = do
+  renderTxt <- cellRendererTextNew
+  let cell = cellText :: (CellRendererTextClass cr) => Attr cr String
 
-refreshView' :: MyGui -> MyView -> FilePath -> IO ()
-refreshView' mygui myview fp = do
-  refreshWindow mygui (leftWindow myview) fp
-  refreshWindow mygui (rightWindow myview) fp
+  column <- treeViewColumnNew
+  treeViewColumnSetTitle        column title
+  treeViewColumnSetResizable    column True
+  treeViewColumnSetClickable    column False
+  treeViewColumnSetSortColumnId column index
+  cellLayoutPackStart column renderTxt True
+  _ <- treeViewAppendColumn view column
+  cellLayoutAddColumnAttribute column renderTxt cell $ makeColumnIdString index
+
   return ()
 
-refreshWindow :: MyGui -> MyWindow -> FilePath -> IO ()
-refreshWindow gui window fp = do
-  print "start refresh window"
-  setCurrentDirectory fp
-  print "setdirectroy"
-  files <- createFileInfo =<< obtainDirectory fp
-  filesList <- listStoreNew files
+refreshContainer :: MyGui -> 
+                    MyContainer -> 
+                    Maybe FilePath -> 
+                    IO ()
+refreshContainer mygui container mfp = do
+  case mfp of
+    Just fp -> refreshContainer' mygui container =<< Files.Manager.readFile fp
+    Nothing -> refreshContainer' mygui container =<< Files.Manager.readFile =<< getHomeFolder
+
+refreshContainer' :: MyGui -> 
+                     MyContainer -> 
+                     FileEntry FileInfo -> 
+                     IO ()
+refreshContainer' mygui container fp = do
+  refreshView mygui (left container) fp
+  refreshView mygui (right container) fp
+  return ()
+
+refreshView :: MyGui -> 
+               MyView -> 
+               FileEntry FileInfo -> 
+               IO ()
+refreshView gui myview fp = do
+  setCurrentDirectory (path fp)
+  newRawModel <- obtainListStore fp
   
-  writeTVarIO (rawModel window) filesList
-  writeTVarIO (path window) fp
-  print "start constructView"
-  constructView gui window
+  writeVar (rawModel myview) newRawModel
+  writeVar (dir myview) (path fp)
+  constructView gui myview
 
-constructView :: MyGui -> MyWindow -> IO ()
+constructView :: MyGui -> 
+                 MyView -> 
+                 IO ()
 constructView gui myview = do
-  view' <- readTVarIO $ view myview
-  rawModel' <- readTVarIO $ rawModel myview
+  view' <- readVar $ view myview
+  rawModel' <- readVar $ rawModel myview
 
-  treeModelSetColumn rawModel' (makeColumnIdString 0) name 
-  treeModelSetColumn rawModel' (makeColumnIdString 1) size 
-  treeModelSetColumn rawModel' (makeColumnIdString 2) permissions
+  treeModelSetColumn rawModel' (makeColumnIdString 0) (name . file) 
+  --treeModelSetColumn rawModel' (makeColumnIdString 1) size 
+  --treeModelSetColumn rawModel' (makeColumnIdString 2) permissions
   
   treeViewSetModel view' rawModel'
   treeViewSetRubberBanding view' True

@@ -16,14 +16,8 @@ createGUI = do
 
   actionMenu <- builderGetObject builder castToMenu "actionMenu"
   actionFileOpen <- builderGetObject builder castToImageMenuItem "actionFileOpen"
-  actionFileExecute <- builderGetObject builder castToImageMenuItem "actionFileExecute"
-  actionFileNew <- builderGetObject builder castToImageMenuItem "actionFileNew"
-  actionFileCut <- builderGetObject builder castToImageMenuItem "actionFileCut"
   actionFileCopy <- builderGetObject builder castToImageMenuItem "actionFileCopy"
-  actionFileRename <- builderGetObject builder castToImageMenuItem "actionFileRename"
-  actionFilePaste <- builderGetObject builder castToImageMenuItem "actionFilePaste"
   actionFileDelete <- builderGetObject builder castToImageMenuItem "actionFileDelete"
 
-  return (MyGui rootWindow scrollWindow1 scrollWindow2 actionMenu actionFileOpen actionFileExecute
-  	actionFileNew actionFileCut actionFileCopy actionFileRename actionFilePaste actionFileDelete)
+  return (MyGui rootWindow scrollWindow1 scrollWindow2 actionMenu actionFileOpen actionFileCopy actionFileDelete)
 

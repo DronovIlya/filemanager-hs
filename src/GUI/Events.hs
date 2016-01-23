@@ -18,25 +18,29 @@ import System.Glib.UTFString
 
 -- | Set GUI events callback : clicks, actions
 setEventsCallbacks :: MyGui -> 
-                      MyView -> 
+                      MyContainer -> 
                       IO ()
-setEventsCallbacks gui myview = do
-  print "setup callbacks"
-  left <- readTVarIO $ (view (leftWindow myview))
-  right <- readTVarIO $ (view (rightWindow myview))
-  _ <- left `on` rowActivated
-    $ (\_ _ -> handleEvent gui (leftWindow myview) (rightWindow myview) open)
+setEventsCallbacks gui container = do
+  print "setup callbacks for container"
 
-  _ <- right `on` rowActivated
-    $ (\_ _ -> handleEvent gui (rightWindow myview) (leftWindow myview) open)
+  leftView <- readTVarIO $ (view (left container))
+  rightView <- readTVarIO $ (view (right container))
+  _ <- leftView `on` rowActivated
+    $ (\_ _ -> handleEvent gui (left container) (right container) open)
 
-  handleGuiEvents gui (leftWindow myview) (rightWindow myview)
-  handleGuiEvents gui (rightWindow myview) (leftWindow myview)
+  _ <- rightView `on` rowActivated
+    $ (\_ _ -> handleEvent gui (right container) (left container) open)
+
+  handleGuiEvents gui (left container) (right container)
+  handleGuiEvents gui (right container) (left container)
   return ()
 
-handleGuiEvents :: MyGui -> MyWindow -> MyWindow -> IO ()
-handleGuiEvents gui fromWindow toWindow = do
-  view <- readTVarIO $ (view fromWindow)
+handleGuiEvents :: MyGui -> 
+                   MyView -> 
+                   MyView -> 
+                   IO ()
+handleGuiEvents gui from to = do
+  view <- readTVarIO $ (view from)
   -- handle mouse right-click
   _ <- view `on` buttonPressEvent $ do
     eb <- eventButton
@@ -47,62 +51,62 @@ handleGuiEvents gui fromWindow toWindow = do
     return False
 
   _ <- actionFileOpen gui `on` menuItemActivated $
-    liftIO $ handleEvent gui fromWindow toWindow open
-  _ <- actionFileExecute gui `on` menuItemActivated $
-    liftIO $ handleEvent gui fromWindow toWindow execute
+    liftIO $ handleEvent gui from to open
   _ <- actionFileCopy gui `on` menuItemActivated $
-    liftIO $ handleEvent gui fromWindow toWindow copy
+    liftIO $ handleEvent gui from to copy
   return ()
   
 
-handleEvent :: MyGui -> MyWindow -> MyWindow -> ([FileInfo] -> MyGui -> MyWindow -> MyWindow -> IO()) -> IO()
-handleEvent gui fromWindow toWindow io = do
-  items <- getSelectedItems gui fromWindow
-  io items gui fromWindow toWindow
+handleEvent :: MyGui -> 
+               MyView -> 
+               MyView -> 
+               ([DataType] -> MyGui -> MyView -> MyView -> IO()) -> 
+               IO ()
+handleEvent gui from to func = do
+  items <- getSelectedItems gui from
+  func items gui from to
 
 -- |Opens a file or directory
-open :: [FileInfo] -> MyGui -> MyWindow -> MyWindow -> IO ()
+open :: [DataType] -> MyGui -> MyView -> MyView -> IO()
 open [file] gui fromWindow toWindow = do
-  path <- readTVarIO $ path fromWindow
-  path' <- createPath path file
-  refreshWindow gui fromWindow path'
+  --path <- readTVarIO $ path fromWindow
+  --path' <- createPath path file
+  --refreshWindow gui fromWindow path'
+  print "open"
   return ()
 
 -- |Copy files from one directory to another
 -- TODO: check cases with incompatible files selection
-copy :: [FileInfo] -> MyGui -> MyWindow -> MyWindow -> IO ()
+copy :: [DataType] -> MyGui -> MyView -> MyView -> IO()
 copy [file] gui fromWindow toWindow = do
-  fromPath <- readTVarIO $ path fromWindow
-  print fromPath
-  fromPath' <- createPath fromPath file
-  print fromPath'
-
-  toPath <- readTVarIO $ path toWindow
-  print toPath
-  toPath' <- createPath toPath file
-  print toPath'
-
-  copyFile fromPath' toPath'
-  refreshWindow gui toWindow toPath
-copy [] gui fromWindow toWindow = do
+  print "copy"
   return ()
+--  fromPath <- readTVarIO $ path fromWindow
+--  print fromPath
+--  fromPath' <- createPath fromPath file
+--  print fromPath'
 
-execute :: [FileInfo] -> MyGui -> MyWindow -> MyWindow -> IO ()
-execute [file] gui fromWindow toWindow = do
-  print "execute"
-  return ()
+--  toPath <- readTVarIO $ path toWindow
+--  print toPath
+--  toPath' <- createPath toPath file
+--  print toPath'
 
-delete :: [FileInfo] -> MyGui -> MyWindow -> MyWindow -> IO ()
+--  copyFile fromPath' toPath'
+--  refreshWindow gui toWindow toPath
+--copy [] gui fromWindow toWindow = do
+--  return ()
+
+delete :: [DataType] -> MyGui -> MyView -> MyView -> IO()
 delete [file] gui fromWindow toWindow = do
   print "delete"
   return ()
 
-upDirectory :: MyGui -> MyWindow -> IO ()
+upDirectory :: MyGui -> MyView -> IO ()
 upDirectory gui window = do
   print "upDirectory"
   return ()
 
-renameFile :: [FileInfo] -> MyGui -> MyWindow -> IO ()
+renameFile :: [DataType] -> MyGui -> MyView -> IO ()
 renameFile [file] gui window = do
   print "renameFile"
   return ()
