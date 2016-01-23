@@ -9,8 +9,10 @@ main :: IO ()
 main = do
   initGUI
 
+  initDirectory
+
   myGui <- createGUI
-  myView <- createMyView myGui createTreeView  
+  myView <- createMyView myGui 
 
   refreshView myGui myView Nothing
 

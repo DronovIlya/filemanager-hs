@@ -9,22 +9,34 @@ import IO.Utils
 -- fix "cycle" probrem at compile time
 import {-# SOURCE #-} GUI.Events (setEventsCallbacks)
 import Files.Manager
-import System.Directory (setCurrentDirectory)
+import System.Directory
 
-createMyView :: MyGui -> IO (TreeView) -> IO (MyView)
-createMyView gui iotv = do
-  treeView <- iotv
+initDirectory :: IO ()
+initDirectory = do
+  home <- getHomeFolder
+  setCurrentDirectory home
+  return ()
 
-  list <- newTVarIO =<< listStoreNew []
+createMyView :: MyGui -> IO (MyView)
+createMyView gui = do
+  leftTreeView <- createTreeView
+  rightTreeView <- createTreeView
+
+  window1 <- initTreeView (scrollWindow1 gui) leftTreeView
+  window2 <- initTreeView (scrollWindow2 gui) rightTreeView
+
+  let myview = MyView window1 window2
+  setEventsCallbacks gui myview
+  return myview
+
+initTreeView :: ScrolledWindow -> TreeView -> IO (MyWindow)
+initTreeView container tv = do
+  rawModel <- newTVarIO =<< listStoreNew []
+  path <- newTVarIO =<< getCurrentDirectory
+  treeView <- newTVarIO tv
+  containerAdd container tv
+  return (MyWindow treeView path rawModel)
   
-  treeView' <- newTVarIO treeView
-  let myView = MyView treeView' list
-
-  setEventsCallbacks gui myView 
-  containerAdd (scrollWindow1 gui) treeView
-
-  return myView
-
 createTreeView :: IO (TreeView)
 createTreeView = do
   treeView <- treeViewNew
@@ -75,15 +87,22 @@ refreshView mygui myview mfp = do
 
 refreshView' :: MyGui -> MyView -> FilePath -> IO ()
 refreshView' mygui myview fp = do
+  refreshWindow mygui (leftWindow myview) fp
+  refreshWindow mygui (rightWindow myview) fp
+  return ()
+
+refreshWindow :: MyGui -> MyWindow -> FilePath -> IO ()
+refreshWindow gui window fp = do
   setCurrentDirectory fp
   files <- createFileInfo =<< obtainDirectory fp
   filesList <- listStoreNew files
+  
+  writeTVarIO (rawModel window) filesList
+  writeTVarIO (path window) fp
 
-  writeTVarIO (rawModel myview) filesList
-  constructView mygui myview
-  return ()
+  constructView gui window
 
-constructView :: MyGui -> MyView -> IO ()
+constructView :: MyGui -> MyWindow -> IO ()
 constructView gui myview = do
   view' <- readTVarIO $ view myview
   rawModel' <- readTVarIO $ rawModel myview

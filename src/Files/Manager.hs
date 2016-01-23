@@ -5,6 +5,7 @@ import System.Posix.User
 import System.Directory
 import Control.Monad
 import Files.Utils (makeSize, makePermissions)
+import Files.Operations
 
 data FileInfo = FileInfo {
   name :: String,
@@ -25,3 +26,14 @@ obtainDirectory path = do
 
 getHomeFolder :: IO FilePath
 getHomeFolder = getLoginName >>= (\name -> return ("/Users/" ++ name))
+
+createPath :: FilePath -> FileInfo -> IO (FilePath)
+createPath dir file = return (dir ++ "/" ++ (name file))
+
+{-
+
+			OPERATIONS
+
+-}
+
+
