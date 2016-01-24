@@ -90,19 +90,20 @@ createTreeViewColumn view title index = do
 refreshContainer :: MyGui -> 
                     MyContainer -> 
                     Maybe FilePath -> 
+                    Maybe FilePath ->
                     IO ()
-refreshContainer mygui container mfp = do
-  case mfp of
-    Just fp -> refreshContainer' mygui container =<< Files.Manager.readFile fp
-    Nothing -> refreshContainer' mygui container =<< Files.Manager.readFile =<< getHomeFolder
+refreshContainer mygui container mfp1 mfp2 = do
+  refreshContainer' mygui (left container) mfp1
+  refreshContainer' mygui (right container) mfp2
 
 refreshContainer' :: MyGui -> 
-                     MyContainer -> 
-                     FileEntry FileInfo -> 
+                     MyView -> 
+                     Maybe FilePath -> 
                      IO ()
-refreshContainer' mygui container fp = do
-  refreshView mygui (left container) fp
-  refreshView mygui (right container) fp
+refreshContainer' mygui view mfp = do
+  case mfp of
+    Just fp -> refreshView mygui view =<< Files.Manager.readFile fp
+    Nothing -> refreshView mygui view =<< Files.Manager.readFile =<< getHomeFolder
   return ()
 
 refreshView :: MyGui -> 
