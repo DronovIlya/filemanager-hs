@@ -2,7 +2,7 @@
 <interface>
   <requires lib="gtk+" version="3.16"/>
   <!-- interface-naming-policy project-wide -->
-   <object class="GtkMenu" id="actionMenu">
+  <object class="GtkMenu" id="actionMenu">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <child>
@@ -83,9 +83,8 @@
       </object>
     </child>
   </object>
-
   <object class="GtkWindow" id="rootWindow">
-    <property name="width_request">500</property>
+    <property name="width_request">700</property>
     <property name="height_request">500</property>
     <property name="can_focus">False</property>
     <property name="has_default">True</property>

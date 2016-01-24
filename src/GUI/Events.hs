@@ -1,15 +1,32 @@
 module GUI.Events where
 
-import Control.Applicative((<$>))
+import Control.Applicative
+  (
+    (<$>)
+  )
+
 import Control.Monad
 import Control.Monad.IO.Class
-import Control.Concurrent.STM(readTVarIO)
-import Data.Maybe(catMaybes, fromJust)
+import Data.Maybe
+  (
+    catMaybes, 
+    fromJust
+  )
 import Graphics.UI.Gtk
 import GUI.Data
 import GUI.MyView
 import GUI.Utils
+import IO.Utils
 import Files.Manager
+  (
+    readFile,
+    getFullPath
+  )
+import Files.Operations
+  (
+    copy
+  )
+import Files.Data
 import System.Directory
 import System.Glib.UTFString
   (
@@ -23,13 +40,14 @@ setEventsCallbacks :: MyGui ->
 setEventsCallbacks gui container = do
   print "setup callbacks for container"
 
-  leftView <- readTVarIO $ (view (left container))
-  rightView <- readTVarIO $ (view (right container))
+  leftView <- readVar $ (view (left container))
+  rightView <- readVar $ (view (right container))
+
   _ <- leftView `on` rowActivated
-    $ (\_ _ -> handleEvent gui (left container) (right container) open)
+    $ (\_ _ -> handleEvent gui (left container) (right container) openEvent)
 
   _ <- rightView `on` rowActivated
-    $ (\_ _ -> handleEvent gui (right container) (left container) open)
+    $ (\_ _ -> handleEvent gui (right container) (left container) openEvent)
 
   handleGuiEvents gui (left container) (right container)
   handleGuiEvents gui (right container) (left container)
@@ -40,7 +58,7 @@ handleGuiEvents :: MyGui ->
                    MyView -> 
                    IO ()
 handleGuiEvents gui from to = do
-  view <- readTVarIO $ (view from)
+  view <- readVar $ (view from)
   -- handle mouse right-click
   _ <- view `on` buttonPressEvent $ do
     eb <- eventButton
@@ -51,9 +69,9 @@ handleGuiEvents gui from to = do
     return False
 
   _ <- actionFileOpen gui `on` menuItemActivated $
-    liftIO $ handleEvent gui from to open
+    liftIO $ handleEvent gui from to openEvent
   _ <- actionFileCopy gui `on` menuItemActivated $
-    liftIO $ handleEvent gui from to copy
+    liftIO $ handleEvent gui from to copyEvent
   return ()
   
 
@@ -67,34 +85,33 @@ handleEvent gui from to func = do
   func items gui from to
 
 -- |Opens a file or directory
-open :: [DataType] -> MyGui -> MyView -> MyView -> IO()
-open [file] gui fromWindow toWindow = do
-  --path <- readTVarIO $ path fromWindow
-  --path' <- createPath path file
-  --refreshWindow gui fromWindow path'
-  print "open"
-  return ()
+openEvent :: [DataType] -> 
+             MyGui -> 
+             MyView -> 
+             MyView -> 
+             IO ()
+openEvent [file] gui from to = do
+  case file of
+    IsDir f -> do
+      ff <- Files.Manager.readFile $ getFullPath file
+      refreshView gui from ff
+    f -> do
+      return ()
+openEvent _ _ _ _ = return ()
 
 -- |Copy files from one directory to another
 -- TODO: check cases with incompatible files selection
-copy :: [DataType] -> MyGui -> MyView -> MyView -> IO()
-copy [file] gui fromWindow toWindow = do
-  print "copy"
+copyEvent :: [DataType] -> 
+             MyGui -> 
+             MyView -> 
+             MyView -> 
+             IO()
+copyEvent [file] gui from to = do
+  toDir <- readVar $ dir to
+  Files.Operations.copy file toDir
+  refreshView gui to toDir
   return ()
---  fromPath <- readTVarIO $ path fromWindow
---  print fromPath
---  fromPath' <- createPath fromPath file
---  print fromPath'
-
---  toPath <- readTVarIO $ path toWindow
---  print toPath
---  toPath' <- createPath toPath file
---  print toPath'
-
---  copyFile fromPath' toPath'
---  refreshWindow gui toWindow toPath
---copy [] gui fromWindow toWindow = do
---  return ()
+copyEvent _ _ _ _ = return ()
 
 delete :: [DataType] -> MyGui -> MyView -> MyView -> IO()
 delete [file] gui fromWindow toWindow = do

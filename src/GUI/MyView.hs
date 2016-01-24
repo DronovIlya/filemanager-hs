@@ -50,7 +50,7 @@ createMyView :: ScrolledWindow ->
                 IO (MyView)
 createMyView container tv = do
   rawModel <- newVar =<< listStoreNew []
-  dir <- newVar =<< getCurrentDirectory
+  dir <- newVar =<< Files.Manager.readFile =<< getCurrentDirectory
   treeView <- newVar tv
   containerAdd container tv
   return (MyView treeView dir rawModel)
@@ -108,12 +108,12 @@ refreshView :: MyGui ->
                MyView -> 
                FileEntry FileInfo -> 
                IO ()
-refreshView gui myview fp = do
-  setCurrentDirectory (path fp)
-  newRawModel <- obtainListStore fp
+refreshView gui myview ff = do
+  setCurrentDirectory $ path ff
+  newRawModel <- obtainListStore ff
   
   writeVar (rawModel myview) newRawModel
-  writeVar (dir myview) (path fp)
+  writeVar (dir myview) ff
   constructView gui myview
 
 constructView :: MyGui -> 

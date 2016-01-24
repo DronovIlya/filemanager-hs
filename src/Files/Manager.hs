@@ -15,7 +15,10 @@ import Files.Utils
 	  upDirPath
   )
 
-import Files.Operations
+import Data.List 
+  (
+    sort
+  )
 import Files.Data
 
 import Control.Exception
@@ -76,7 +79,7 @@ readDirectory' :: [FilePath] ->
                   IO [FileEntry FileInfo]
 readDirectory' files fi fp = do
   content <- mapM (\p -> readFile' fi $ fp </> p) files
-  return content
+  return $ sort content
 
 getDirectoryFiles :: FilePath ->
                      IO [FilePath]
@@ -104,9 +107,6 @@ obtainContents :: FileEntry FileInfo ->
                   IO [FileEntry FileInfo]
 obtainContents ff = readDirectory $ getFullPath ff
 
-getHomeFolder :: IO FilePath
-getHomeFolder = getLoginName >>= (\name -> return ("/Users/" ++ name))
-
       -------------------
       -- HANDLE ERRORS --
       -------------------
@@ -117,14 +117,19 @@ handleError :: FilePath -> -- ^ path to file
                IO (FileEntry a)    -- ^ resuling unkhown file
 handleError fp fn = handle (\e -> return $ FileEntry fp $ UnkhownFile fn e)
 
-
-getFullPath :: FileEntry a ->
-               FilePath
-getFullPath (FileEntry folder file) = folder </> name file
-
 -- |Parse all information about file
 parseFileInfo :: FilePath -> IO FileInfo
 parseFileInfo fp = do
   status <- SPF.getSymbolicLinkStatus fp
   return $ FileInfo
     (SPF.modificationTime status)
+
+      -------------------
+      -- Some util methods --
+      -------------------
+getFullPath :: FileEntry a ->
+               FilePath
+getFullPath (FileEntry folder file) = folder </> name file
+
+getHomeFolder :: IO FilePath
+getHomeFolder = getLoginName >>= (\name -> return ("/Users/" ++ name))

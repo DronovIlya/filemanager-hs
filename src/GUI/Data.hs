@@ -16,7 +16,7 @@ data MyContainer = MyContainer {
 -- |Model that contains neccesary data
 data MyView = MyView {
   view     :: TVar TreeView,                 -- ^ main view container
-  dir      :: TVar FilePath,                 -- ^ current directory 
+  dir      :: TVar DataType,                 -- ^ current directory 
   rawModel :: TVar (ListStore DataType)      -- ^ corresponding data
 }
 
