@@ -4,6 +4,7 @@ import Control.Monad
 import Graphics.UI.Gtk
 import GUI.Data
 import GUI.Utils
+import GUI.MyGui
 import IO.Utils
   (
     newVar,
@@ -13,7 +14,8 @@ import IO.Utils
 -- fix "cycle" probrem at compile time
 import {-# SOURCE #-} GUI.Events 
   (
-    setEventsCallbacks
+    setEventsCallbacks,
+    refreshStatusBar
   )
 
 import Files.Manager
@@ -22,6 +24,7 @@ import Files.Manager
     getHomeFolder,
     isHidden
   )
+import Files.Utils
 
 import Files.Data
 import System.Directory
@@ -63,10 +66,32 @@ createTreeView = do
   selection <- treeViewGetSelection treeView
   treeSelectionSetMode selection SelectionMultiple
 
-  createTreeViewColumn treeView "Filename" 0
-  createTreeViewColumn treeView "Date" 1
-  createTreeViewColumn treeView "Permission" 2
+  createTreeViewIconColumn treeView "Filename" 0 1
+  createTreeViewColumn treeView "Date" 2
+  createTreeViewColumn treeView "Permission" 3
   return treeView
+
+createTreeViewIconColumn :: TreeView ->
+                            String ->
+                            Int ->
+                            Int ->
+                            IO ()
+createTreeViewIconColumn tv title i1 i2 = do
+  renderT <- cellRendererTextNew
+  renderP <- cellRendererPixbufNew
+  let cellT = cellText   :: (CellRendererTextClass cr) => Attr cr String
+      cellBuf = cellPixbuf :: (CellRendererPixbufClass self) => Attr self Pixbuf
+  
+  column <- treeViewColumnNew
+  treeViewColumnSetTitle        column title
+  treeViewColumnSetResizable    column True
+  treeViewColumnSetClickable    column True
+  treeViewColumnSetSortColumnId column i2
+  cellLayoutPackStart column renderP False
+  cellLayoutPackStart column renderT True
+  _ <- treeViewAppendColumn tv column
+  cellLayoutAddColumnAttribute column renderP cellBuf $ makeColumnIdPixbuf i1
+  cellLayoutAddColumnAttribute column renderT cellT   $ makeColumnIdString i2
 
 createTreeViewColumn :: TreeView ->
                         String ->
@@ -95,6 +120,7 @@ refreshContainer :: MyGui ->
 refreshContainer mygui container mfp1 mfp2 = do
   refreshContainer' mygui (left container) mfp1
   refreshContainer' mygui (right container) mfp2
+  refreshStatusBar mygui container
 
 refreshContainer' :: MyGui -> 
                      MyView -> 
@@ -133,10 +159,14 @@ constructView gui myview = do
   view' <- readVar $ view myview
   rawModel' <- readVar $ rawModel myview
 
-  treeModelSetColumn rawModel' (makeColumnIdString 0) (name . file) 
-  --treeModelSetColumn rawModel' (makeColumnIdString 1) size 
+  treeModelSetColumn rawModel' (makeColumnIdPixbuf 0) (getIcon . file)
+  treeModelSetColumn rawModel' (makeColumnIdString 1) (name . file) 
+  treeModelSetColumn rawModel' (makeColumnIdString 2) (time . content . file)
   --treeModelSetColumn rawModel' (makeColumnIdString 2) permissions
   
   treeViewSetModel view' rawModel'
   treeViewSetRubberBanding view' True
   return ()
+  where
+    getIcon (Directory {})   = folderIcon gui
+    getIcon (RegularFile {}) = fileIcon gui

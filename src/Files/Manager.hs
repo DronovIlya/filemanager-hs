@@ -9,10 +9,9 @@ import System.FilePath
   )
 import Files.Utils 
   (
-	  makeSize, 
-	  makePermissions,
-	  curDirPath,
-	  upDirPath
+    makeTime,
+    curDirPath,
+    upDirPath
   )
 
 import Data.List 
@@ -97,7 +96,7 @@ getDirectoryFiles' stream dirs = do
   dir <- SPD.readDirStream stream
   if dir == ""
     then return dirs
-    else getDirectoryFiles' stream (dir : dirs)	
+    else getDirectoryFiles' stream (dir : dirs)
 
 
       -------------------------------------
@@ -122,8 +121,8 @@ handleError fp fn = handle (\e -> return $ FileEntry fp (UnkhownFile fn e))
 parseFileInfo :: FilePath -> IO FileInfo
 parseFileInfo fp = do
   status <- SPF.getSymbolicLinkStatus fp
-  return $ FileInfo
-    (SPF.modificationTime status)
+  return $ FileInfo (makeTime $ SPF.modificationTime status)
+
 
       -------------------
       -- Some util methods --
@@ -135,13 +134,13 @@ getFullPath (FileEntry folder file) = folder </> name file
 getHomeFolder :: IO FilePath
 getHomeFolder = getLoginName >>= (\name -> return ("/Users/" ++ name))
 
-isHidden :: FileEntry FileInfo ->
-            Bool
-isHidden ff = isHiddenFileName (name $ file ff) 
-
 isHiddenFileName :: String ->
                     Bool
 isHiddenFileName ".." = False
 isHiddenFileName fp 
   | "." `isPrefixOf` fp = True
   | otherwise            = False
+
+isHidden :: FileEntry FileInfo ->
+            Bool
+isHidden ff = isHiddenFileName (name $ file ff) 

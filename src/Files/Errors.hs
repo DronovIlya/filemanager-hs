@@ -12,7 +12,7 @@ import Control.Monad
 
 import System.IO.Error
   (
-  	catchIOError
+    catchIOError
   )
 
 import qualified System.Posix.Files as SPF

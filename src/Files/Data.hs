@@ -18,7 +18,7 @@ import Data.Ord
 
 import System.Posix.Types 
   (
-	  EpochTime
+    EpochTime
   )
 
 import Control.Exception.Base
@@ -48,7 +48,7 @@ data File a =
   } deriving (Show, Eq)
 
 data FileInfo = FileInfo {
-  modificationTime :: EpochTime -- ^ file modification time
+  time       :: String -- ^ file modification time
 } deriving (Show, Eq, Ord)
 
   ----------------------

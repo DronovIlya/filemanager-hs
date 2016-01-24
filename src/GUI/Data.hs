@@ -25,6 +25,10 @@ data MyGui = MyGui {
   rootWindow :: Window,                      -- ^ root window - GtkWindow
   scrollWindow1 :: ScrolledWindow,           -- ^ left scrolled window
   scrollWindow2 :: ScrolledWindow,           -- ^ right scrolled window
+  statusBar1        :: Statusbar,
+  statusBar2        :: Statusbar,
+
+  menuChangeHidden  :: ImageMenuItem,
 
   actionMenu :: Menu,                        -- ^ action menu appears on right click
   actionFileOpen :: ImageMenuItem,           -- ^ open file
@@ -32,6 +36,9 @@ data MyGui = MyGui {
   actionFileDelete :: ImageMenuItem,          -- ^ delete file
 
   -- Support information
-  showHidden :: TVar Bool
+  showHidden :: TVar Bool,
+  
+  folderIcon :: Pixbuf,
+  fileIcon   :: Pixbuf
 }
 

@@ -6,3 +6,7 @@ import GUI.Data
 setEventsCallbacks :: MyGui -> 
                       MyContainer -> 
                       IO ()
+
+refreshStatusBar   :: MyGui ->
+                      MyContainer -> 
+                      IO ()

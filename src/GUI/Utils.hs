@@ -62,3 +62,12 @@ filterContent :: Bool ->
                  IO [FileEntry FileInfo] 
 filterContent True ff = return ff
 filterContent False ff = return $ filter (not . Files.Manager.isHidden) ff
+
+-- |Push a message to the status bar.
+pushStatusBar :: Statusbar -> 
+                 String -> 
+                 IO (ContextId, MessageId)
+pushStatusBar sb str = do
+  cid <- statusbarGetContextId sb "Status"
+  mid <- statusbarPush sb cid str
+  return (cid, mid)

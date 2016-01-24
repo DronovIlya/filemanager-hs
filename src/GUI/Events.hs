@@ -52,33 +52,51 @@ setEventsCallbacks gui container = do
   _ <- rightView `on` rowActivated
     $ (\_ _ -> handleEvent gui (right container) (left container) onOpenEvent)
 
-  handleGuiEvents gui (left container) (right container)
-  handleGuiEvents gui (right container) (left container)
+  _ <- menuChangeHidden gui `on` menuItemActivated $
+    liftIO $ onChangeHidden gui container
+
+  handleGuiEvents gui container (left container) (right container)
+  handleGuiEvents gui container (right container) (left container)
   return ()
 
 handleGuiEvents :: MyGui -> 
+                   MyContainer ->
                    MyView -> 
                    MyView -> 
                    IO ()
-handleGuiEvents gui from to = do
+handleGuiEvents gui cont from to = do
   view <- readVar $ view from
   -- handle mouse right-click
+  path <- readVar $ dir from
   _ <- view `on` buttonPressEvent $ do
     eb <- eventButton
     t <- eventTime
     case eb of
       RightButton -> liftIO $ menuPopup (actionMenu gui) $ Just (RightButton, t) 
-      _ -> return ()
+      LeftButton ->  liftIO $ refreshStatusBar gui cont
     return False
-
+  _ <- rootWindow gui `on` keyPressEvent $ tryEvent $ do
+    [Control] <- eventModifier
+    "q"       <- fmap glibToString eventKeyName 
+    liftIO mainQuit
   _ <- actionFileOpen gui `on` menuItemActivated $
     liftIO $ handleEvent gui from to onOpenEvent
   _ <- actionFileCopy gui `on` menuItemActivated $
     liftIO $ handleEvent gui from to onCopyEvent
   _ <- actionFileDelete gui `on` menuItemActivated $
     liftIO $ handleEvent gui from to onDeleteEvent
-  return ()
   
+  return ()
+
+onChangeHidden :: MyGui ->
+                  MyContainer ->
+                  IO ()
+onChangeHidden gui cont = do
+  hidden <- readVar $ showHidden gui
+  writeVar (showHidden gui) (not hidden)
+  refreshViewState gui (left cont)
+  refreshViewState gui (right cont)
+  return ()
 
 handleEvent :: MyGui -> 
                MyView -> 
@@ -140,4 +158,17 @@ onUpDirectoryEvent gui from to = do
   fromDir <- readVar $ dir from
   ff <- Files.Manager.readFile $ Files.Utils.upDirPath $ getFullPath fromDir
   refreshView gui from ff
+  return ()
+
+
+refreshStatusBar :: MyGui ->
+                    MyContainer ->
+                    IO ()
+refreshStatusBar gui cnt = do
+  l <- readVar $ dir $ left cnt
+  _ <- pushStatusBar (statusBar1 gui) (getFullPath l)
+
+
+  r <- readVar $ dir $ right cnt
+  _ <- pushStatusBar (statusBar2 gui) (getFullPath r)
   return ()

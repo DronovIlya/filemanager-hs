@@ -4,7 +4,7 @@ import Graphics.UI.Gtk
 import Control.Monad.IO.Class
 import GUI.MyGui 
   (
-	createGUI
+    createGUI
   )
 import GUI.MyView
 import Control.Monad
@@ -13,8 +13,8 @@ import GUI.Data
 import Files.Manager
 import GUI.DbUtils 
   (
-  	insert,
-  	get
+    insert,
+    get
   )
 
 main :: IO ()
@@ -33,6 +33,8 @@ main = do
 
   widgetShowAll (rootWindow gui)
   
+  set (rootWindow gui) [windowTitle := "FileManager"]
+
   _ <- rootWindow gui `on` deleteEvent $
     liftIO $ saveState container >> return False
 
@@ -49,6 +51,8 @@ saveState container = do
   print $ Files.Manager.getFullPath rightDir
   GUI.DbUtils.insert "leftDir"  $ Files.Manager.getFullPath leftDir
   GUI.DbUtils.insert "rightDir" $ Files.Manager.getFullPath rightDir
+
+  mainQuit
 
 restoreState :: IO (Maybe String, Maybe String)
 restoreState = do
