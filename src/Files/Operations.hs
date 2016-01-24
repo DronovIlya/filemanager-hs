@@ -2,6 +2,7 @@ module Files.Operations where
 
 import Files.Data
 import Files.Manager
+import Files.Errors
 import System.FilePath
   (
     (</>)
@@ -60,7 +61,8 @@ copyDirToDir from@(FileEntry _ (Directory fn _))
   = do
     let fromPath = Files.Manager.getFullPath from
         toPath = Files.Manager.getFullPath to </> fn
-    -- TODO: check if exists
+
+    throwDirExists toPath
     D.createDirectory toPath
     
     toDir <- Files.Manager.readFile toPath

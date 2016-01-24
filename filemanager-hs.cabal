@@ -17,6 +17,7 @@ library
                        Files.Utils
                        Files.Operations
                        Files.Data
+                       Files.Errors
   build-depends:       base >= 4.7,
                        directory >= 1.1.0.0 && < 1.2.3.0,
                        process,
@@ -36,6 +37,7 @@ executable filemanager-hs-gtk
                        GUI.MyView
                        GUI.Events
                        GUI.Utils
+                       GUI.Popup
                        IO.Utils
 
   build-depends:       filemanager-hs,

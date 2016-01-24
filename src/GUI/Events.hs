@@ -16,6 +16,7 @@ import Graphics.UI.Gtk
 import GUI.Data
 import GUI.MyView
 import GUI.Utils
+import GUI.Popup
 import IO.Utils
 import Files.Manager
   (
@@ -106,7 +107,7 @@ copyEvent :: [DataType] ->
              MyView -> 
              MyView -> 
              IO()
-copyEvent [file] gui from to = do
+copyEvent [file] gui from to = catchError $ do
   toDir <- readVar $ dir to
   Files.Operations.copy file toDir
   refreshView gui to toDir
