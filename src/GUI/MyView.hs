@@ -19,7 +19,8 @@ import {-# SOURCE #-} GUI.Events
 import Files.Manager
   (
     readFile,
-    getHomeFolder
+    getHomeFolder,
+    isHidden
   )
 
 import Files.Data
@@ -110,7 +111,8 @@ refreshView :: MyGui ->
                IO ()
 refreshView gui myview ff = do
   setCurrentDirectory $ path ff
-  newRawModel <- obtainListStore ff
+  showHidden <- readVar $ showHidden gui
+  newRawModel <- obtainListStore ff showHidden
   
   writeVar (rawModel myview) newRawModel
   writeVar (dir myview) ff

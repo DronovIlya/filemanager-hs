@@ -20,6 +20,17 @@ showErrorDialog s = do
   _ <- dialogRun dialog
   widgetDestroy dialog
 
+showProgressDialog :: String ->
+                      IO ()
+showProgressDialog title = do
+  showErrorDialog title
+  --dialog <- dialogNew
+  --set dialog [windowTitle := title]
+
+  --_ <- dialogRun dialog
+  --widgetDestroy dialog
+
+
 catchError :: IO a ->
                 IO ()
 catchError io = do

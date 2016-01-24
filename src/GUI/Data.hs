@@ -29,6 +29,9 @@ data MyGui = MyGui {
   actionMenu :: Menu,                        -- ^ action menu appears on right click
   actionFileOpen :: ImageMenuItem,           -- ^ open file
   actionFileCopy :: ImageMenuItem,           -- ^ copy file
-  actionFileDelete :: ImageMenuItem          -- ^ delete file
+  actionFileDelete :: ImageMenuItem,          -- ^ delete file
+
+  -- Support information
+  showHidden :: TVar Bool
 }
 

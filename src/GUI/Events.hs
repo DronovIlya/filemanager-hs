@@ -109,6 +109,7 @@ copyEvent :: [DataType] ->
              IO()
 copyEvent [file] gui from to = catchError $ do
   toDir <- readVar $ dir to
+  --showProgressDialog "Copy"
   forkIO $ do
     Files.Operations.copy file toDir
     postGUIAsync $ refreshView gui to toDir

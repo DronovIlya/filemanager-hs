@@ -1,6 +1,7 @@
 module GUI.MyGui where
 
 import Graphics.UI.Gtk
+import IO.Utils
 import GUI.Data
 
 project_path = "/Users/ilya.dronov/ifmo/haskell/course/filemanager-hs/"
@@ -19,5 +20,7 @@ createGUI = do
   actionFileCopy <- builderGetObject builder castToImageMenuItem "actionFileCopy"
   actionFileDelete <- builderGetObject builder castToImageMenuItem "actionFileDelete"
 
-  return (MyGui rootWindow scrollWindow1 scrollWindow2 actionMenu actionFileOpen actionFileCopy actionFileDelete)
+  showHidden <- newVar False
+  return (MyGui rootWindow scrollWindow1 scrollWindow2 actionMenu actionFileOpen 
+    actionFileCopy actionFileDelete showHidden)
 

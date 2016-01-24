@@ -17,7 +17,8 @@ import Files.Utils
 
 import Data.List 
   (
-    sort
+    sort,
+    isPrefixOf
   )
 import Files.Data
 
@@ -133,3 +134,15 @@ getFullPath (FileEntry folder file) = folder </> name file
 
 getHomeFolder :: IO FilePath
 getHomeFolder = getLoginName >>= (\name -> return ("/Users/" ++ name))
+
+isHidden :: FileEntry FileInfo ->
+            Bool
+isHidden ff = isHiddenFileName (name $ file ff) 
+
+isHiddenFileName :: String ->
+                    Bool
+isHiddenFileName "."  = False
+isHiddenFileName ".." = False
+isHiddenFileName fp 
+  | "." `isPrefixOf` fp = True
+  | otherwise            = False

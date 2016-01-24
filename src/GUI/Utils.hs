@@ -18,7 +18,8 @@ import GUI.Data
 import IO.Utils
 import Files.Manager
   (
-    obtainContents
+    obtainContents,
+    isHidden
   )
 
 import Files.Data
@@ -51,7 +52,15 @@ getSelectedTreePaths gui myview = do
 
 
 obtainListStore :: FileEntry FileInfo ->
+                   Bool ->
                    IO (ListStore DataType)
-obtainListStore ff = do
+obtainListStore ff hidden = do
   content <- Files.Manager.obtainContents ff
-  listStoreNew content
+  filteredContent <- filterContent hidden content
+  listStoreNew filteredContent
+
+filterContent :: Bool ->
+                 [FileEntry FileInfo] ->
+                 IO [FileEntry FileInfo] 
+filterContent True ff = return ff
+filterContent False ff = return $ filter (not . Files.Manager.isHidden) ff
