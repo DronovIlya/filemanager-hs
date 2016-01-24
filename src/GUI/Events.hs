@@ -29,7 +29,7 @@ import Files.Operations
     deleteFiles,
     openFile
   )
-
+import Files.Utils
 import Control.Concurrent
 import Files.Data
 import System.Directory
@@ -43,8 +43,8 @@ setEventsCallbacks :: MyGui ->
                       MyContainer -> 
                       IO ()
 setEventsCallbacks gui container = do
-  leftView <- readVar $ (view (left container))
-  rightView <- readVar $ (view (right container))
+  leftView <- readVar $ view (left container)
+  rightView <- readVar $ view (right container)
 
   _ <- leftView `on` rowActivated
     $ (\_ _ -> handleEvent gui (left container) (right container) onOpenEvent)
@@ -61,7 +61,7 @@ handleGuiEvents :: MyGui ->
                    MyView -> 
                    IO ()
 handleGuiEvents gui from to = do
-  view <- readVar $ (view from)
+  view <- readVar $ view from
   -- handle mouse right-click
   _ <- view `on` buttonPressEvent $ do
     eb <- eventButton
@@ -95,8 +95,9 @@ onOpenEvent :: [DataType] ->
              MyView -> 
              MyView -> 
              IO ()
-onOpenEvent [file] gui from to = do
+onOpenEvent [file] gui from to =
   case file of
+    IsUpDir f -> onUpDirectoryEvent gui from to
     IsDir f -> do
       ff <- Files.Manager.readFile $ getFullPath file
       refreshView gui from ff
@@ -105,7 +106,7 @@ onOpenEvent [file] gui from to = do
       return ()
 onOpenEvent _ _ _ _ = return ()
 
--- |Copy files from one directory to another
+-- |Copy files from one directory to another  
 -- TODO: check cases with incompatible files selection
 onCopyEvent :: [DataType] -> 
              MyGui -> 
@@ -131,7 +132,12 @@ onDeleteEvent files gui from to = do
     postGUIAsync $ refreshViewState gui from
   return ()
 
-upDirectory :: MyGui -> MyView -> IO ()
-upDirectory gui window = do
-  print "upDirectory"
+onUpDirectoryEvent :: MyGui ->
+                      MyView -> 
+                      MyView -> 
+                      IO ()
+onUpDirectoryEvent gui from to = do
+  fromDir <- readVar $ dir from
+  ff <- Files.Manager.readFile $ Files.Utils.upDirPath $ getFullPath fromDir
+  refreshView gui from ff
   return ()

@@ -26,9 +26,7 @@ throwDirExists :: FilePath ->
                   IO ()
 throwDirExists fp = do
   exists <- dirExists fp
-  if (exists)
-  then throw $ DirExists fp
-  else return ()
+  when exists $ throw $ DirExists fp
 
 dirExists :: FilePath ->
              IO Bool

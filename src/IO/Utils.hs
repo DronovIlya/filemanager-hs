@@ -11,11 +11,11 @@ import Control.Concurrent.STM
 
 newVar :: a -> 
           IO (TVar a)
-newVar var = newTVarIO var
+newVar = newTVarIO
 
 readVar :: TVar a -> 
            IO a
-readVar var = readTVarIO var
+readVar = readTVarIO
 
 writeVar :: TVar a -> 
             a -> 

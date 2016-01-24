@@ -41,7 +41,7 @@ import qualified System.Posix.Directory as SPD
       ----------------------------------------------------
 
 
-readFile :: (FilePath) ->
+readFile :: FilePath ->
             IO (FileEntry FileInfo)
 readFile fp = do
   fi <- parseFileInfo fp
@@ -95,7 +95,7 @@ getDirectoryFiles' :: SPD.DirStream ->
                       IO [FilePath]
 getDirectoryFiles' stream dirs = do
   dir <- SPD.readDirStream stream
-  if (dir == "")
+  if dir == ""
     then return dirs
     else getDirectoryFiles' stream (dir : dirs)	
 
@@ -116,7 +116,7 @@ handleError :: FilePath -> -- ^ path to file
                FileName -> -- ^ file's name
                IO (FileEntry a) -> -- ^ parsed file entry
                IO (FileEntry a)    -- ^ resuling unkhown file
-handleError fp fn = handle (\e -> return $ FileEntry fp $ UnkhownFile fn e)
+handleError fp fn = handle (\e -> return $ FileEntry fp (UnkhownFile fn e))
 
 -- |Parse all information about file
 parseFileInfo :: FilePath -> IO FileInfo

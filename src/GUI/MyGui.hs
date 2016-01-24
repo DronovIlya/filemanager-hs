@@ -4,12 +4,12 @@ import Graphics.UI.Gtk
 import IO.Utils
 import GUI.Data
 
-project_path = "/Users/ilya.dronov/ifmo/haskell/course/filemanager-hs/"
+projectPath = "/Users/ilya.dronov/ifmo/haskell/course/filemanager-hs/"
 
 createGUI :: IO MyGui
 createGUI = do
   builder <- builderNew
-  builderAddFromFile builder (project_path ++ "res/layout.glade")
+  builderAddFromFile builder (projectPath ++ "res/layout.glade")
  
   rootWindow    <- builderGetObject builder castToWindow "rootWindow"
   scrollWindow1 <- builderGetObject builder castToScrolledWindow "scrolledwindow1"

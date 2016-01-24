@@ -57,12 +57,12 @@ data FileInfo = FileInfo {
 
 matchFile :: FileEntry FileInfo ->
              (Bool, FileEntry FileInfo)
-matchFile ff@(FileEntry _ (RegularFile {})) = (True, ff)
+matchFile ff@(FileEntry _ RegularFile {}) = (True, ff)
 matchFile ff                                = (False, ff)
 
 matchDir :: FileEntry FileInfo ->
             (Bool, FileEntry FileInfo)
-matchDir ff@(FileEntry _ (Directory {}))    = (True, ff)
+matchDir ff@(FileEntry _ Directory {})    = (True, ff)
 matchDir ff                                 = (False, ff)
 
 matchInvalidFileName :: FileName -> (Bool, FileName)
@@ -71,8 +71,15 @@ matchInvalidFileName "."  = (True, ".")
 matchInvalidFileName ".." = (True, "..")
 matchInvalidFileName fn   = (False, fn)
 
+matchUpDir :: FileEntry FileInfo ->
+              (Bool, FileEntry FileInfo)
+matchUpDir ff@(FileEntry _ (Directory ".." _)) = (True, ff)
+matchUpDir ff                                = (False, ff)
+
 pattern IsDir f  <- (matchDir   -> (True, f))
 pattern IsFile f <- (matchFile  -> (True, f))
+
+pattern IsUpDir f <- (matchUpDir -> (True, f))
 
 pattern IsInvalid <- (fst . matchInvalidFileName . name . file -> True)
 

@@ -33,7 +33,7 @@ main = do
 
   widgetShowAll (rootWindow gui)
   
-  _ <- (rootWindow gui) `on` deleteEvent $
+  _ <- rootWindow gui `on` deleteEvent $
     liftIO $ saveState container >> return False
 
   mainGUI
@@ -50,8 +50,8 @@ saveState container = do
   GUI.DbUtils.insert "leftDir"  $ Files.Manager.getFullPath leftDir
   GUI.DbUtils.insert "rightDir" $ Files.Manager.getFullPath rightDir
 
-restoreState :: IO ((Maybe String, Maybe String))
+restoreState :: IO (Maybe String, Maybe String)
 restoreState = do
-  leftPath  <- GUI.DbUtils.get("leftDir")
-  rightPath <- GUI.DbUtils.get("rightDir")
+  leftPath  <- GUI.DbUtils.get "leftDir"
+  rightPath <- GUI.DbUtils.get "rightDir"
   return (leftPath, rightPath) 

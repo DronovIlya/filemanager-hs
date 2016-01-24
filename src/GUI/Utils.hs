@@ -38,8 +38,7 @@ getSelectedItems' :: MyGui ->
 getSelectedItems' gui myview tps = do
   rawModel' <- readVar $ rawModel myview
   iters <- catMaybes <$> mapM (treeModelGetIter rawModel') tps
-  forM iters $ \iter -> do
-    treeModelGetRow rawModel' iter
+  forM iters $ \iter -> treeModelGetRow rawModel' iter
 
 getSelectedTreePaths :: MyGui -> 
                         MyView -> 

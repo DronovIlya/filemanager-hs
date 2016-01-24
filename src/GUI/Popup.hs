@@ -22,8 +22,7 @@ showErrorDialog s = do
 
 showProgressDialog :: String ->
                       IO ()
-showProgressDialog title = do
-  showErrorDialog title
+showProgressDialog = showErrorDialog
   --dialog <- dialogNew
   --set dialog [windowTitle := title]
 

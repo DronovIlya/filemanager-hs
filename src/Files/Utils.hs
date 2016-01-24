@@ -22,17 +22,17 @@ makeSize path = E.catch (makeSize' path) handler
     handler _ = return $ show 0
 
 makeSize' :: FilePath -> IO String
-makeSize' path = ((I.openFile path I.ReadMode) >>= (\handle -> do
+makeSize' path = I.openFile path I.ReadMode >>= (\handle -> do
   size <- I.hFileSize handle
   I.hClose handle
-  return $ show size ))
+  return $ show size )
 
 makePermissions :: FilePath -> IO String
 makePermissions path = getPermissions path >>=
- ( \p -> return ( ( if ( readable p ) then "r" else "-" ) 
-                    ++ ( if ( writable p ) then "w" else "-" )
-                    ++ ( if ( executable p ) then "x" else  "-" )
-                    ++ ( if ( searchable p ) then "s" else "-" ) ) )
+ ( \p -> return ( ( if readable p then "r" else "-" ) 
+                    ++ ( if writable p then "w" else "-" )
+                    ++ ( if executable p then "x" else  "-" )
+                    ++ ( if searchable p then "s" else "-" ) ) )
 
 
        -----------

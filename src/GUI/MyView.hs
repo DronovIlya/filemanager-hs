@@ -33,7 +33,7 @@ initDirectory = do
   return ()
 
 createBaseContainer :: MyGui -> 
-                       IO (MyContainer)
+                       IO MyContainer
 createBaseContainer gui = do
   leftTree <- createTreeView
   rightTree <- createTreeView
@@ -48,7 +48,7 @@ createBaseContainer gui = do
 
 createMyView :: ScrolledWindow -> 
                 TreeView -> 
-                IO (MyView)
+                IO MyView
 createMyView container tv = do
   rawModel <- newVar =<< listStoreNew []
   dir <- newVar =<< Files.Manager.readFile =<< getCurrentDirectory
@@ -56,7 +56,7 @@ createMyView container tv = do
   containerAdd container tv
   return (MyView treeView dir rawModel)
   
-createTreeView :: IO (TreeView)
+createTreeView :: IO TreeView
 createTreeView = do
   treeView <- treeViewNew
     

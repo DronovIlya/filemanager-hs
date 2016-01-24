@@ -20,6 +20,8 @@ type Value = String
 data Database = Database !(Map.Map Key Value)
     deriving (Show, Ord, Eq, Typeable)
 
+projectPath = "/Users/ilya.dronov/ifmo/haskell/course/filemanager-hs/db/"
+
 $(deriveSafeCopy 0 'base ''Database)
 
 insertKey :: Key -> Value -> Update Database ()
@@ -39,13 +41,13 @@ fixtures = Map.empty
 
 insert :: Key -> Value -> IO ()
 insert key val = do
-  database <- openLocalStateFrom "db/" (Database fixtures)
+  database <- openLocalStateFrom projectPath (Database fixtures)
   _ <- update database (InsertKey key val)
   closeAcidState database
 
 get :: Key -> IO (Maybe Value)
 get key = do
-  database <- openLocalStateFrom "db/" (Database fixtures)
+  database <- openLocalStateFrom projectPath (Database fixtures)
   result <- query database (LookupKey key)
   closeAcidState database
   return result
