@@ -2,7 +2,10 @@ module Main where
 
 import Graphics.UI.Gtk
 import Control.Monad.IO.Class
-import GUI.MyGui (createGUI)
+import GUI.MyGui 
+  (
+	createGUI
+  )
 import GUI.MyView
 import Control.Monad
 import IO.Utils
@@ -24,6 +27,8 @@ main = do
   container <- createBaseContainer gui 
 
   (leftPath, rightPath) <- restoreState
+  print leftPath
+  print rightPath
   refreshContainer gui container leftPath rightPath
 
   widgetShowAll (rootWindow gui)
@@ -39,7 +44,9 @@ saveState :: MyContainer ->
 saveState container = do
   leftDir  <- readVar $ dir (left container)
   rightDir <- readVar $ dir (right container)
-
+  print "saveState"
+  print $ Files.Manager.getFullPath leftDir
+  print $ Files.Manager.getFullPath rightDir
   GUI.DbUtils.insert "leftDir"  $ Files.Manager.getFullPath leftDir
   GUI.DbUtils.insert "rightDir" $ Files.Manager.getFullPath rightDir
 

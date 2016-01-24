@@ -106,6 +106,13 @@ refreshContainer' mygui view mfp = do
     Nothing -> refreshView mygui view =<< Files.Manager.readFile =<< getHomeFolder
   return ()
 
+refreshViewState :: MyGui ->
+                    MyView ->
+                    IO ()
+refreshViewState gui view = do
+  dir <- readVar $ dir view
+  refreshView gui view dir
+
 refreshView :: MyGui -> 
                MyView -> 
                FileEntry FileInfo -> 

@@ -25,7 +25,8 @@ import Files.Manager
   )
 import Files.Operations
   (
-    copy
+    copyFiles,
+    deleteFiles
   )
 
 import Control.Concurrent
@@ -45,10 +46,10 @@ setEventsCallbacks gui container = do
   rightView <- readVar $ (view (right container))
 
   _ <- leftView `on` rowActivated
-    $ (\_ _ -> handleEvent gui (left container) (right container) openEvent)
+    $ (\_ _ -> handleEvent gui (left container) (right container) onOpenEvent)
 
   _ <- rightView `on` rowActivated
-    $ (\_ _ -> handleEvent gui (right container) (left container) openEvent)
+    $ (\_ _ -> handleEvent gui (right container) (left container) onOpenEvent)
 
   handleGuiEvents gui (left container) (right container)
   handleGuiEvents gui (right container) (left container)
@@ -70,9 +71,11 @@ handleGuiEvents gui from to = do
     return False
 
   _ <- actionFileOpen gui `on` menuItemActivated $
-    liftIO $ handleEvent gui from to openEvent
+    liftIO $ handleEvent gui from to onOpenEvent
   _ <- actionFileCopy gui `on` menuItemActivated $
-    liftIO $ handleEvent gui from to copyEvent
+    liftIO $ handleEvent gui from to onCopyEvent
+  _ <- actionFileDelete gui `on` menuItemActivated $
+    liftIO $ handleEvent gui from to onDeleteEvent
   return ()
   
 
@@ -86,39 +89,44 @@ handleEvent gui from to func = do
   func items gui from to
 
 -- |Opens a file or directory
-openEvent :: [DataType] -> 
+onOpenEvent :: [DataType] -> 
              MyGui -> 
              MyView -> 
              MyView -> 
              IO ()
-openEvent [file] gui from to = do
+onOpenEvent [file] gui from to = do
   case file of
     IsDir f -> do
       ff <- Files.Manager.readFile $ getFullPath file
       refreshView gui from ff
     f -> do
       return ()
-openEvent _ _ _ _ = return ()
+onOpenEvent _ _ _ _ = return ()
 
 -- |Copy files from one directory to another
 -- TODO: check cases with incompatible files selection
-copyEvent :: [DataType] -> 
+onCopyEvent :: [DataType] -> 
              MyGui -> 
              MyView -> 
              MyView -> 
              IO()
-copyEvent [file] gui from to = catchError $ do
+onCopyEvent files gui from to = catchError $ do
   toDir <- readVar $ dir to
   --showProgressDialog "Copy"
   forkIO $ do
-    Files.Operations.copy file toDir
+    Files.Operations.copyFiles files toDir
     postGUIAsync $ refreshView gui to toDir
   return ()
-copyEvent _ _ _ _ = return ()
 
-delete :: [DataType] -> MyGui -> MyView -> MyView -> IO()
-delete [file] gui fromWindow toWindow = do
-  print "delete"
+onDeleteEvent :: [DataType] -> 
+               MyGui -> 
+               MyView -> 
+               MyView -> 
+               IO ()
+onDeleteEvent files gui from to = do
+  forkIO $ do
+    Files.Operations.deleteFiles files
+    postGUIAsync $ refreshViewState gui from
   return ()
 
 upDirectory :: MyGui -> MyView -> IO ()

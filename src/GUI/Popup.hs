@@ -32,7 +32,7 @@ showProgressDialog title = do
 
 
 catchError :: IO a ->
-                IO ()
+              IO ()
 catchError io = do
   r <- try io
   either (\e -> showErrorDialog $ show (e :: SomeException))
