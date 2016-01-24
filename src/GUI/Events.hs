@@ -27,6 +27,8 @@ import Files.Operations
   (
     copy
   )
+
+import Control.Concurrent
 import Files.Data
 import System.Directory
 import System.Glib.UTFString
@@ -39,8 +41,6 @@ setEventsCallbacks :: MyGui ->
                       MyContainer -> 
                       IO ()
 setEventsCallbacks gui container = do
-  print "setup callbacks for container"
-
   leftView <- readVar $ (view (left container))
   rightView <- readVar $ (view (right container))
 
@@ -109,8 +109,9 @@ copyEvent :: [DataType] ->
              IO()
 copyEvent [file] gui from to = catchError $ do
   toDir <- readVar $ dir to
-  Files.Operations.copy file toDir
-  refreshView gui to toDir
+  forkIO $ do
+    Files.Operations.copy file toDir
+    postGUIAsync $ refreshView gui to toDir
   return ()
 copyEvent _ _ _ _ = return ()
 
