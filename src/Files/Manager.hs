@@ -141,7 +141,6 @@ isHidden ff = isHiddenFileName (name $ file ff)
 
 isHiddenFileName :: String ->
                     Bool
-isHiddenFileName "."  = False
 isHiddenFileName ".." = False
 isHiddenFileName fp 
   | "." `isPrefixOf` fp = True

@@ -26,7 +26,8 @@ import Files.Manager
 import Files.Operations
   (
     copyFiles,
-    deleteFiles
+    deleteFiles,
+    openFile
   )
 
 import Control.Concurrent
@@ -100,6 +101,7 @@ onOpenEvent [file] gui from to = do
       ff <- Files.Manager.readFile $ getFullPath file
       refreshView gui from ff
     f -> do
+      Files.Operations.openFile f
       return ()
 onOpenEvent _ _ _ _ = return ()
 
@@ -132,9 +134,4 @@ onDeleteEvent files gui from to = do
 upDirectory :: MyGui -> MyView -> IO ()
 upDirectory gui window = do
   print "upDirectory"
-  return ()
-
-renameFile :: [DataType] -> MyGui -> MyView -> IO ()
-renameFile [file] gui window = do
-  print "renameFile"
   return ()

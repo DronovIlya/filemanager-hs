@@ -25,6 +25,11 @@ import System.Posix.Types
   (
     FileMode
   )
+import System.Process
+  (
+    spawnProcess
+  , ProcessHandle
+  )
 
 import qualified System.Directory as D
 
@@ -122,3 +127,9 @@ deleteFile :: FileEntry FileInfo ->
 deleteFile IsInvalid = return () -- throw exception 
 deleteFile f@(FileEntry _ (RegularFile {})) = D.removeFile (Files.Manager.getFullPath f)
 deleteFile _ = return () -- throw exception
+
+
+
+openFile :: FileEntry FileInfo ->
+            IO ProcessHandle
+openFile f = spawnProcess "open" [Files.Manager.getFullPath f]
