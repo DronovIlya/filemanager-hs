@@ -1,44 +1,24 @@
+-- |Module provides base mechanism for handling GUI events
 module GUI.Events where
-
-import Control.Applicative
-  (
-    (<$>)
-  )
 
 import Control.Monad
 import Control.Monad.IO.Class
-import Data.Maybe
-  (
-    catMaybes, 
-    fromJust
-  )
+import Data.Maybe ( catMaybes, fromJust)
 import Graphics.UI.Gtk
 import GUI.Data
 import GUI.MyView
 import GUI.Utils
 import GUI.Popup
 import IO.Utils
-import Files.Manager
-  (
-    readFile,
-    getFullPath
-  )
-import Files.Operations
-  (
-    copyFiles,
-    deleteFiles,
-    openFile
-  )
+import Files.Manager ( readFile, getFullPath )
+import Files.Operations ( copyFiles, deleteFiles, openFile, createFile' )
 import Files.Utils
 import Control.Concurrent
 import Files.Data
 import System.Directory
-import System.Glib.UTFString
-  (
-    glibToString
-  )
+import System.Glib.UTFString ( glibToString )
 
--- | Set GUI events callback : clicks, actions
+-- |Set GUI events callbacks : clicks, actions
 setEventsCallbacks :: MyGui -> 
                       MyContainer -> 
                       IO ()
@@ -54,11 +34,16 @@ setEventsCallbacks gui container = do
 
   _ <- menuChangeHidden gui `on` menuItemActivated $
     liftIO $ onChangeHidden gui container
+  
+  _ <- actionFileNew gui `on` menuItemActivated $
+    liftIO $ onNewEvent gui (left container)
 
   handleGuiEvents gui container (left container) (right container)
   handleGuiEvents gui container (right container) (left container)
   return ()
 
+-- |Handle base GUI events : right or left click event, 
+-- some control events, and menu events
 handleGuiEvents :: MyGui -> 
                    MyContainer ->
                    MyView -> 
@@ -66,7 +51,7 @@ handleGuiEvents :: MyGui ->
                    IO ()
 handleGuiEvents gui cont from to = do
   view <- readVar $ view from
-  -- handle mouse right-click
+  -- handle mouse right and left clicks
   path <- readVar $ dir from
   _ <- view `on` buttonPressEvent $ do
     eb <- eventButton
@@ -85,19 +70,9 @@ handleGuiEvents gui cont from to = do
     liftIO $ handleEvent gui from to onCopyEvent
   _ <- actionFileDelete gui `on` menuItemActivated $
     liftIO $ handleEvent gui from to onDeleteEvent
-  
   return ()
 
-onChangeHidden :: MyGui ->
-                  MyContainer ->
-                  IO ()
-onChangeHidden gui cont = do
-  hidden <- readVar $ showHidden gui
-  writeVar (showHidden gui) (not hidden)
-  refreshViewState gui (left cont)
-  refreshViewState gui (right cont)
-  return ()
-
+-- | Retrieve selected items from tree view and execute action
 handleEvent :: MyGui -> 
                MyView -> 
                MyView -> 
@@ -108,6 +83,7 @@ handleEvent gui from to func = do
   func items gui from to
 
 -- |Opens a file or directory
+-- TODO: check cases with incompatible files selection
 onOpenEvent :: [DataType] -> 
              MyGui -> 
              MyView -> 
@@ -133,12 +109,13 @@ onCopyEvent :: [DataType] ->
              IO()
 onCopyEvent files gui from to = catchError $ do
   toDir <- readVar $ dir to
-  --showProgressDialog "Copy"
   forkIO $ do
     Files.Operations.copyFiles files toDir
     postGUIAsync $ refreshView gui to toDir
   return ()
 
+-- |Delete files from directory
+-- TODO: check cases with incompatible files selection
 onDeleteEvent :: [DataType] -> 
                MyGui -> 
                MyView -> 
@@ -150,6 +127,22 @@ onDeleteEvent files gui from to = do
     postGUIAsync $ refreshViewState gui from
   return ()
 
+-- |Create a file event
+-- TODO: check cases with incompatible files selection
+onNewEvent :: MyGui ->
+              MyView ->
+              IO ()
+onNewEvent gui view = catchError $ do
+  fromDir <- readVar $ dir view
+  mfn <- textInputDialog "Please, enter file name"
+  case mfn of
+    Just fn -> do
+      Files.Operations.createFile' fromDir fn
+      refreshViewState gui view
+    _       -> return ()
+
+-- |Move to up directory
+-- TODO: check cases with incompatible files selection
 onUpDirectoryEvent :: MyGui ->
                       MyView -> 
                       MyView -> 
@@ -160,7 +153,18 @@ onUpDirectoryEvent gui from to = do
   refreshView gui from ff
   return ()
 
+-- |Change hidden states in GUI. Updates all views for re-load files
+onChangeHidden :: MyGui ->
+                  MyContainer ->
+                  IO ()
+onChangeHidden gui cont = do
+  hidden <- readVar $ showHidden gui
+  writeVar (showHidden gui) (not hidden)
+  refreshViewState gui (left cont)
+  refreshViewState gui (right cont)
+  return ()
 
+-- |Update status bar on each scroll windows
 refreshStatusBar :: MyGui ->
                     MyContainer ->
                     IO ()

@@ -1,29 +1,16 @@
 module GUI.Utils where
 
-import Control.Applicative
-  (
-    (<$>)
-  )
 import Control.Monad
-
-import Data.Maybe
-  (
-    catMaybes, 
-    fromJust
-  )
-
+import Data.Maybe ( catMaybes, fromJust )
 import Graphics.UI.Gtk
 import GUI.Data
 import IO.Utils
-import Files.Manager
-  (
-    obtainContents,
-    isHidden
-  )
+import Files.Manager ( obtainContents, isHidden)
 
 import Files.Data
 import System.Directory
 
+-- |Return list of selected items in TreeView model
 getSelectedItems :: MyGui -> 
                     MyView -> 
                     IO [DataType]
@@ -31,6 +18,7 @@ getSelectedItems gui view = do
   tps <- getSelectedTreePaths gui view
   getSelectedItems' gui view tps
 
+-- |Retrive selected items from TreeView rows
 getSelectedItems' :: MyGui -> 
                      MyView -> 
                      [TreePath] -> 
@@ -48,7 +36,8 @@ getSelectedTreePaths gui myview = do
   tvs <- treeViewGetSelection view'
   treeSelectionGetSelectedRows tvs 
 
-
+-- | Load from FileManager files on a given filepath.
+-- Filter it on 'showHidden' option in Gui object
 obtainListStore :: FileEntry FileInfo ->
                    Bool ->
                    IO (ListStore DataType)
@@ -57,6 +46,7 @@ obtainListStore ff hidden = do
   filteredContent <- filterContent hidden content
   listStoreNew filteredContent
 
+-- | Filter list's content
 filterContent :: Bool ->
                  [FileEntry FileInfo] ->
                  IO [FileEntry FileInfo] 

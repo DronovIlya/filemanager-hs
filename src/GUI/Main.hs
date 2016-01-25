@@ -1,21 +1,15 @@
+-- |Main GUI module
 module Main where
 
 import Graphics.UI.Gtk
 import Control.Monad.IO.Class
-import GUI.MyGui 
-  (
-    createGUI
-  )
+import GUI.MyGui ( createGUI )
 import GUI.MyView
 import Control.Monad
 import IO.Utils
 import GUI.Data
 import Files.Manager
-import GUI.DbUtils 
-  (
-    insert,
-    get
-  )
+import GUI.DbUtils ( insert, get )
 
 main :: IO ()
 main = do
@@ -26,9 +20,8 @@ main = do
   gui <- createGUI
   container <- createBaseContainer gui 
 
+  -- restore saved state and fill views
   (leftPath, rightPath) <- restoreState
-  print leftPath
-  print rightPath
   refreshContainer gui container leftPath rightPath
 
   widgetShowAll (rootWindow gui)
@@ -41,6 +34,8 @@ main = do
   mainGUI
   return ()
 
+-- |Save container state into DB. Save only 2 paths that indicated left and right window
+-- Saving state only on successful closure
 saveState :: MyContainer ->
              IO ()
 saveState container = do
@@ -54,6 +49,7 @@ saveState container = do
 
   mainQuit
 
+-- |Restore saved state from DB.
 restoreState :: IO (Maybe String, Maybe String)
 restoreState = do
   leftPath  <- GUI.DbUtils.get "leftDir"
