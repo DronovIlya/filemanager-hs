@@ -72,16 +72,13 @@ createTreeViewIconColumn tv title i1 i2 = do
   let cellT = cellText   :: (CellRendererTextClass cr) => Attr cr String
       cellBuf = cellPixbuf :: (CellRendererPixbufClass self) => Attr self Pixbuf
   
-  column <- treeViewColumnNew
-  treeViewColumnSetTitle        column title
-  treeViewColumnSetResizable    column True
-  treeViewColumnSetClickable    column False
-  treeViewColumnSetSortColumnId column i2
+  column <- createColumn title i2
   cellLayoutPackStart column renderP False
   cellLayoutPackStart column renderT True
   _ <- treeViewAppendColumn tv column
   cellLayoutAddColumnAttribute column renderP cellBuf $ makeColumnIdPixbuf i1
   cellLayoutAddColumnAttribute column renderT cellT   $ makeColumnIdString i2
+
 
 -- | Create tree view column without icon
 createTreeViewColumn :: TreeView ->
@@ -92,17 +89,24 @@ createTreeViewColumn view title index = do
   renderTxt <- cellRendererTextNew
   let cell = cellText :: (CellRendererTextClass cr) => Attr cr String
 
-  column <- treeViewColumnNew
-  treeViewColumnSetTitle        column title
-  treeViewColumnSetResizable    column True
-  treeViewColumnSetClickable    column False
-  treeViewColumnSetSortColumnId column index
+  column <- createColumn title index
   cellLayoutPackStart column renderTxt True
   _ <- treeViewAppendColumn view column
   cellLayoutAddColumnAttribute column renderTxt cell $ makeColumnIdString index
 
   return ()
 
+-- | Create a simple TreeView column
+createColumn :: String ->
+                Int ->
+                IO TreeViewColumn
+createColumn title i = do
+  column <- treeViewColumnNew
+  treeViewColumnSetTitle        column title
+  treeViewColumnSetResizable    column True
+  treeViewColumnSetClickable    column False
+  treeViewColumnSetSortColumnId column i
+  return column
 -- | Refresh whole container : refresh left and right views and updates each status bar
 refreshContainer :: MyGui -> 
                     MyContainer -> 
@@ -166,5 +170,5 @@ constructView gui myview = do
   treeViewSetRubberBanding view' True
   return ()
   where
-    getIcon (Directory {})   = folderIcon gui
-    getIcon (RegularFile {}) = fileIcon gui
+    getIcon Directory {}   = folderIcon gui
+    getIcon RegularFile {} = fileIcon gui

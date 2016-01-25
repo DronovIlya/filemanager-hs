@@ -14,7 +14,7 @@ data Icon = TFolder | TFile | TUnkhown
 -- |Create icon on given type
 createIcon :: Icon ->
               IO Pixbuf
-createIcon icon = pixbufNewFromFile =<< getDataFileName ("res/images/" ++ (iconPath icon))
+createIcon icon = pixbufNewFromFile =<< getDataFileName ("res/images/" ++ iconPath icon)
   where
     iconPath TFolder     = "directory.png"
     iconPath TFile       = "file.png"
@@ -24,7 +24,7 @@ createIcon icon = pixbufNewFromFile =<< getDataFileName ("res/images/" ++ (iconP
 createGUI :: IO MyGui
 createGUI = do
   builder <- builderNew
-  builderAddFromFile builder =<< getDataFileName ("res/layout.glade")
+  builderAddFromFile builder =<< getDataFileName "res/layout.glade"
  
   folderIcon       <- createIcon TFolder
   fileIcon         <- createIcon TFile

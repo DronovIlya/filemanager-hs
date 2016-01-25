@@ -113,7 +113,9 @@ handleError :: FilePath ->                -- ^ path to file
                FileName ->                -- ^ file's name
                IO (FileEntry a) ->        -- ^ parsed file entry
                IO (FileEntry a)           -- ^ resuling unkhown file
-handleError fp fn = handle (\e -> return $ FileEntry fp (UnkhownFile fn e))
+handleError fp fn = handle (\e -> do
+  print e
+  return $ FileEntry fp $ UnkhownFile fn e)
 
 -- |Parse all information about file.
 -- Uses POSIX file status to determine state of file
